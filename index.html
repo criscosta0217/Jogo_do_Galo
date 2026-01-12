@@ -4,13 +4,32 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Jogo do Galo</title>
+
   <style>
     :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
-    body { margin: 0; display: grid; place-items: center; min-height: 100vh; background: #0f172a; color: #e2e8f0; }
-    .card { width: min(520px, 92vw); background: #111827; border: 1px solid #24304a; border-radius: 16px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+    body {
+      margin: 0;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+    .card {
+      width: min(520px, 92vw);
+      background: #111827;
+      border: 1px solid #24304a;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
     h1 { margin: 0 0 10px; font-size: 20px; }
-    p { margin: 6px 0 14px; color: #b6c2d9; font-size: 14px; line-height: 1.4; }
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    p { margin: 6px 0 14px; color: #b6c2d9; font-size: 14px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
     button.cell {
       aspect-ratio: 1 / 1;
       font-size: 44px;
@@ -19,53 +38,47 @@
       background: #0b1220;
       color: #e2e8f0;
       cursor: pointer;
-      transition: transform .05s ease, background .2s ease;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
     }
-    button.cell:active { transform: scale(.98); }
-    button.cell:disabled { cursor: default; opacity: .9; }
-    .row { display: flex; gap: 10px; align-items: center; justify-content: space-between; margin-top: 14px; flex-wrap: wrap; }
-    .status { font-weight: 600; }
+    button.cell:disabled { opacity: .8; cursor: default; }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+    }
     .actions button {
-      padding: 10px 12px;
-      border-radius: 12px;
+      padding: 8px 12px;
+      border-radius: 10px;
       border: 1px solid #2b3957;
       background: #15233a;
       color: #e2e8f0;
       cursor: pointer;
     }
     .actions button:hover { background: #1a2b49; }
-    .hint { font-size: 12px; color: #93a4c7; margin-top: 10px; }
   </style>
 </head>
+
 <body>
   <div class="card">
     <h1>Jogo do Galo</h1>
-    <p>You are <b>X</b>. Computer is <b>O</b>. You always go first. Tap a square to play.</p>
+    <p>You are <b>X</b>. Computer is <b>O</b>. You always go first.</p>
 
     <div class="grid" id="grid"></div>
 
     <div class="row">
-      <div class="status" id="status">Your turn (X)</div>
+      <div id="status">Your turn (X)</div>
       <div class="actions">
-        <button id="newGameBtn">New game</button>
+        <button id="newGameBtn">New Game</button>
       </div>
     </div>
-
-    <div class="hint">Works on iPhone / Android / laptop. Open this file in a browser.</div>
   </div>
 
   <script>
-    // Board indexes: 0..8
-    // 0 1 2
-    // 3 4 5
-    // 6 7 8
     let board = Array(9).fill(" ");
     let gameOver = false;
 
-    const gridEl = document.getElementById("grid");
-    const statusEl = document.getElementById("status");
+    const grid = document.getElementById("grid");
+    const status = document.getElementById("status");
     const newGameBtn = document.getElementById("newGameBtn");
 
     const wins = [
@@ -75,45 +88,37 @@
     ];
 
     function render() {
-      gridEl.innerHTML = "";
+      grid.innerHTML = "";
       for (let i = 0; i < 9; i++) {
         const btn = document.createElement("button");
         btn.className = "cell";
         btn.textContent = board[i] === " " ? "" : board[i];
         btn.disabled = gameOver || board[i] !== " ";
-        btn.addEventListener("click", () => playerMove(i));
-        gridEl.appendChild(btn);
+        btn.onclick = () => playerMove(i);
+        grid.appendChild(btn);
       }
     }
 
     function checkWinner(letter) {
-      return wins.some(line => line.every(idx => board[idx] === letter));
+      return wins.some(line => line.every(i => board[i] === letter));
     }
 
     function boardFull() {
       return board.every(c => c !== " ");
     }
 
-    function setStatus(text) {
-      statusEl.textContent = text;
-    }
-
-    function endGame(message) {
+    function endGame(msg) {
       gameOver = true;
-      setStatus(message);
+      status.textContent = msg;
       render();
     }
 
-    // If placing `letter` in an empty square completes a line, return that index; else -1
     function findWinningMove(letter) {
       for (const line of wins) {
-        const cells = line.map(i => board[i]); // e.g. ["X","X"," "]
-        const letterCount = cells.filter(c => c === letter).length;
-        const emptyCount = cells.filter(c => c === " ").length;
-
-        if (letterCount === 2 && emptyCount === 1) {
-          const emptyIndexInLine = line[cells.indexOf(" ")];
-          return emptyIndexInLine;
+        const cells = line.map(i => board[i]);
+        if (cells.filter(c => c === letter).length === 2 &&
+            cells.includes(" ")) {
+          return line[cells.indexOf(" ")];
         }
       }
       return -1;
@@ -129,40 +134,58 @@
         endGame("You win! 🎉");
         return;
       }
+
       if (boardFull()) {
-        endGame("It's a tie! 🤝");
+        endGame("It's a tie 🤝");
         return;
       }
 
-      setStatus("Computer thinking…");
-      setTimeout(computerMove, 250);
+      status.textContent = "Computer thinking…";
+      setTimeout(computerMove, 300);
     }
 
     function computerMove() {
-      if (gameOver) return;
-
-      const possible = [];
-      for (let i = 0; i < 9; i++) if (board[i] === " ") possible.push(i);
-
-      if (possible.length === 0) {
-        endGame("It's a tie! 🤝");
-        return;
-      }
-
-      // 1) Win if possible
-      let move = findWinningMove("O");
-
-      // 2) Otherwise block X if they can win next (your requirement)
-      if (move === -1) move = findWinningMove("X");
-
-      // 3) Otherwise choose corners, then center, then edges (simple strategy)
-      if (move === -1) {
-        const corners = [0, 2, 6, 8].filter(i => board[i] === " ");
-        if (corners.length) move = corners[Math.floor(Math.random() * corners.length)];
-      }
+      let move = findWinningMove("O");   // win
+      if (move === -1) move = findWinningMove("X"); // block
 
       if (move === -1 && board[4] === " ") move = 4; // center
 
       if (move === -1) {
-        const edges = [1, 3, 5, 7].filter(i => board[i] === " ");
-        if (edges.length) move = edges[Math.floor(Math.random() * edges.len*]()
+        const corners = [0,2,6,8].filter(i => board[i] === " ");
+        if (corners.length) move = corners[Math.floor(Math.random() * corners.length)];
+      }
+
+      if (move === -1) {
+        const edges = [1,3,5,7].filter(i => board[i] === " ");
+        if (edges.length) move = edges[Math.floor(Math.random() * edges.length)];
+      }
+
+      board[move] = "O";
+      render();
+
+      if (checkWinner("O")) {
+        endGame("Computer wins 🤖");
+        return;
+      }
+
+      if (boardFull()) {
+        endGame("It's a tie 🤝");
+        return;
+      }
+
+      status.textContent = "Your turn (X)";
+    }
+
+    function newGame() {
+      board = Array(9).fill(" ");
+      gameOver = false;
+      status.textContent = "Your turn (X)";
+      render();
+    }
+
+    newGameBtn.onclick = newGame;
+
+    newGame();
+  </script>
+</body>
+</html>
